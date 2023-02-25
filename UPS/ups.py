@@ -3,6 +3,7 @@ from os import system
 from sys import exit
 from time import sleep
 
+import upscode.undervoltage as undervoltage
 import upsconfig
 
 if upsconfig.upstype == "UPiS":
@@ -16,12 +17,13 @@ else:
     exit(0)
 
 attachedups = ups.UPS()
-
+vgcmd = undervoltage.Undervoltage()
 sleep(5)
 
 
 def upsCheckStatus():
     onbattery = False
+    vgcmd.undervoltage()
     attachedups.updatedisplay()
 
     while True:
@@ -39,6 +41,7 @@ def upsCheckStatus():
             system("sudo shutdown -h now")  # Shutdown the Pi
 
         attachedups.updatedisplay()
+        vgcmd.undervoltage()
         sleep(upsconfig.refreshtime)
 
 

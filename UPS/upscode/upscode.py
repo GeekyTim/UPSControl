@@ -1,6 +1,3 @@
-from gpiozero import InputDevice
-
-
 class UPSCode:
     """
     UPS Driver for the SBComponents UPS
@@ -9,6 +6,7 @@ class UPSCode:
 
     def __init__(self):
         pass
+
     """
     The following properties should exist in all UPS code - returning 'None' if the value cannot be extracted
     """
