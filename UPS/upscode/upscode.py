@@ -1,21 +1,14 @@
-from os import path
 from gpiozero import InputDevice
 
 
-
-class UPS:
+class UPSCode:
     """
     UPS Driver for the SBComponents UPS
     """
     __batterydetectionpin = 26
-    __batterylowerlimit = 15.0  # Percent
-
-    __verbose = False
-
 
     def __init__(self):
-        batterystatus = InputDevice(self.__batterydetectionpin)
-
+        pass
     """
     The following properties should exist in all UPS code - returning 'None' if the value cannot be extracted
     """
@@ -42,7 +35,7 @@ class UPS:
 
     @property
     def isbatteryok(self):
-        return
+        return None
 
     @property
     def ischarging(self):
@@ -50,31 +43,18 @@ class UPS:
 
     @property
     def getcurrent(self):
-        return self.__getcurrent()
+        return None
 
     @property
     def batterypercentage(self):
-        return self.__get_batterypercentage()
+        return None
 
     @property
     def getpowersource(self):
-        powersource = "Unknown"
-
-        if self.ispowered:
-            powersource = "External"
-        elif self.isonbattery:
-            powersource = "Battery"
-
-        return powersource
+        return None
 
     def updatedisplay(self):
         """
         If the UPS is able to display its condition, do so
         """
-        if self.ispowered:
-            self.__oled_display.PrintText("Powered", cords=(1, 4), FontSize=28)
-        else:
-            self.__oled_display.PrintText("Battery: {:3.1f}%".format(self.batterypercentage), cords=(3, 10),
-                                          FontSize=16)
-
-        self.__oled_display.ShowImage()
+        pass

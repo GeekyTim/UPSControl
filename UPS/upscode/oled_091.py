@@ -20,8 +20,9 @@ DISPLAY_ON = 0xA4
 DISPLAY_INVERT = 0xA6
 DISPLAY_ON = 0xAE  # Off: sleep mode
 DISPLAY_OFF = 0xAF  # On: Normal Mode
+DISPLAY_NORMAL = 0xA6
 
-# Address Settting Command Table
+# Address Setting Command Table
 MEM_ADD_MODE = 0x20
 COLUMN_ADD = 0x21
 PAGE_ADD = 0x22
@@ -40,6 +41,10 @@ SET_CLK_DIV = 0xD5
 SET_PRE_CHARGE = 0xD9
 SET_DESELECT = 0xDB
 CHARGE_PUMP = 0x8D
+
+# Additional
+DEACTIVATE_SCROLL = 0x2E
+DISPLAYALLONIGNORE = 0xA5
 
 
 class i2c_interface:

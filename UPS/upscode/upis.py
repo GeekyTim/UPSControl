@@ -1,5 +1,6 @@
-from sys import exit
 from os import path
+from sys import exit
+
 import serial
 
 
@@ -48,7 +49,9 @@ class UPS(object):
             # get rid of the newline characters
             line = line.decode().strip()
 
-            print("INFO: Reading line {0}".format(line))
+            if self.__verbose:
+                print("INFO: Reading line {0}".format(line))
+
             # is it the answer we are looking for? (yep, should be regexp...)
             if resultstring in line:
                 response = line.split(":", 1)[1].split(" ")[0]

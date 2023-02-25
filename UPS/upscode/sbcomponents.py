@@ -1,7 +1,9 @@
-import smbus
 from os import path
 
+import smbus
+
 from .oled_091 import SSD1306
+from .upscode import UPSCode
 
 
 class Bus_Voltage_Range:
@@ -45,7 +47,7 @@ class Mode:
     SANDBVOLT_CONTINUOUS = 0x07  # shunt and __bus voltage continuous
 
 
-class UPS:
+class UPS(UPSCode):
     """
     UPS Driver for the SBComponents UPS
     """
@@ -66,8 +68,12 @@ class UPS:
     __DefaultFont = path.join(__DIR_PATH, "../resources/GothamLight.ttf")
 
     def __init__(self):
+        super().__init__()
+
+        # The OLED Display - over I2C
         self.__oled_display = SSD1306()
 
+        # The UPS status over I2C
         self.__bus = smbus.SMBus(self.__ups_i2c_bus)
         self.__addr = self.__ups_addr
 
@@ -149,21 +155,11 @@ class UPS:
 
     @property
     def ispowered(self):
-        power = self.__power()
-        return power <= 1.0
+        return self.__power() <= 1.0
 
     @property
     def isonbattery(self):
-        power = self.__power()
-        return power > 1.0
-
-    @property
-    def getbatteryvoltage(self):
-        return None
-
-    @property
-    def getpivoltage(self):
-        return None
+        return self.__power() > 1.0
 
     @property
     def getsupplyvoltage(self):
@@ -172,10 +168,6 @@ class UPS:
     @property
     def isbatteryok(self):
         return self.__get_batterypercentage() >= self.__batterylowerlimit
-
-    @property
-    def ischarging(self):
-        return None
 
     @property
     def getcurrent(self):
