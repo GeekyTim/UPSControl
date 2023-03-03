@@ -19,7 +19,7 @@ WantedBy=multi-user.target
 
 echo "Installing required libraries"
 sudo apt update
-sudo apt install python3-pip
+sudo apt install python3-pip python3-systemd -y
 sudo pip3 install vcgencmd
 
 echo "Change unit file permissions"

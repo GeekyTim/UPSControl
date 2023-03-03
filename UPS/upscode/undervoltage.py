@@ -13,30 +13,58 @@ class Undervoltage:
     __HAS_THROTTLED = '18'
     __HAS_SOFT_TEMPLIMIT = '19'
 
-    def __init__(self):
+    def __init__(self, log):
         self.__vcgm = Vcgencmd()
+        self.__log = log
 
-    def __print_log(self, flag, info):
+        self.__previousoutput = ""
+
+    @staticmethod
+    def __addlog(infostring, flag, info):
+        response = infostring
         if flag:
-            print(info, end=', ')
+            if infostring != "":
+                if infostring[-1] != " ":
+                    response = response + ", "
+            response = response + info
+
+        return response
 
     def undervoltage(self):
         output = self.__vcgm.get_throttled()
 
-        if output['breakdown'][self.__UNDERVOLTED] or output['breakdown'][self.__CAPPED] or output['breakdown'][
-            self.__THROTTLED] or output['breakdown'][self.__SOFT_TEMPLIMIT]:
-            print('Currently: ', end=' ')
+        infostring = ""
 
-            self.__print_log(output['breakdown'][self.__UNDERVOLTED], 'Undervoltage')
-            self.__print_log(output['breakdown'][self.__CAPPED], 'Capped')
-            self.__print_log(output['breakdown'][self.__THROTTLED], 'Throttled')
-            self.__print_log(output['breakdown'][self.__SOFT_TEMPLIMIT], 'Soft Temp. Limit')
+        if output['breakdown'][self.__UNDERVOLTED] or \
+                output['breakdown'][self.__CAPPED] or \
+                output['breakdown'][self.__THROTTLED] or \
+                output['breakdown'][self.__SOFT_TEMPLIMIT]:
 
-        if output['breakdown'][self.__HAS_UNDERVOLTED] or output['breakdown'][self.__HAS_CAPPED] or output[
-            'breakdown'][self.__HAS_THROTTLED] or output['breakdown'][self.__HAS_SOFT_TEMPLIMIT]:
-            print('Previously: ', end=' ')
+            infostring = 'Currently: '
 
-            self.__print_log(output['breakdown'][self.__HAS_UNDERVOLTED], 'Capped')
-            self.__print_log(output['breakdown'][self.__HAS_CAPPED], 'HAS_CAPPED')
-            self.__print_log(output['breakdown'][self.__HAS_THROTTLED], 'Throttled')
-            self.__print_log(output['breakdown'][self.__HAS_SOFT_TEMPLIMIT], 'Soft Temp. Limit')
+            infostring = self.__addlog(infostring, output['breakdown'][self.__UNDERVOLTED],
+                                       'Undervoltage')
+            infostring = self.__addlog(infostring, output['breakdown'][self.__CAPPED], 'Capped')
+            infostring = self.__addlog(infostring, output['breakdown'][self.__THROTTLED],
+                                       'Throttled')
+            infostring = self.__addlog(infostring, output['breakdown'][self.__SOFT_TEMPLIMIT],
+                                       'Soft Temperature Limit')
+
+        if output['breakdown'][self.__HAS_UNDERVOLTED] or \
+                output['breakdown'][self.__HAS_CAPPED] or \
+                output['breakdown'][self.__HAS_THROTTLED] or \
+                output['breakdown'][self.__HAS_SOFT_TEMPLIMIT]:
+
+            infostring = self.__addlog(infostring, True, 'Previously: ')
+
+            infostring = self.__addlog(infostring, output['breakdown'][self.__HAS_UNDERVOLTED],
+                                       'Undervoltage')
+            infostring = self.__addlog(infostring, output['breakdown'][self.__HAS_CAPPED], 'Capped')
+            infostring = self.__addlog(infostring, output['breakdown'][self.__HAS_THROTTLED],
+                                       'Throttled')
+            infostring = self.__addlog(infostring, output['breakdown'][self.__HAS_SOFT_TEMPLIMIT],
+                                       'Soft Temperature Limit')
+
+        if self.__previousoutput != infostring:
+            self.__log.info(infostring)
+            self.__previousoutput = infostring

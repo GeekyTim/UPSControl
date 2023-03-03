@@ -1,9 +1,4 @@
 class UPSCode:
-    """
-    UPS Driver for the SBComponents UPS
-    """
-    __batterydetectionpin = 26
-
     def __init__(self):
         pass
 
@@ -12,46 +7,46 @@ class UPSCode:
     """
 
     @property
-    def ispowered(self):
+    def isPowered(self):
         return None
 
     @property
-    def isonbattery(self):
+    def isOnBattery(self):
         return None
 
     @property
-    def getbatteryvoltage(self):
+    def batteryVoltage(self):
         return None
 
     @property
-    def getpivoltage(self):
+    def piVoltage(self):
         return None
 
     @property
-    def getsupplyvoltage(self):
+    def supplyVoltage(self):
         return None
 
     @property
-    def isbatteryok(self):
+    def isBatteryOk(self):
         return None
 
     @property
-    def ischarging(self):
+    def isCharging(self):
         return None
 
     @property
-    def getcurrent(self):
+    def current(self):
         return None
 
     @property
-    def batterypercentage(self):
+    def batteryPercent(self):
         return None
 
     @property
-    def getpowersource(self):
+    def powerSource(self):
         return None
 
-    def updatedisplay(self):
+    def updateDisplay(self):
         """
         If the UPS is able to display its condition, do so
         """

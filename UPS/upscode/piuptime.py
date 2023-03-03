@@ -9,14 +9,17 @@ class UPS(UPSCode):
     """
     __batterydetectionpin = 26
 
-    def __init__(self):
+    def __init__(self, log):
         super().__init__()
+
+        self.__log = log
         self.__batterystatus = InputDevice(self.__batterydetectionpin)
 
     """
-    The following properties should exist in all UPS code - returning 'None' if the value cannot be extracted
+    The following properties should exist in all UPS code - returning 'None' if the value cannot be
+    extracted
     """
 
     @property
-    def isbatteryok(self):
+    def isBatteryOk(self):
         return self.__batterystatus.is_active

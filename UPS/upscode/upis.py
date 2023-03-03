@@ -1,10 +1,10 @@
 from os import path
-from sys import exit
-
 import serial
 
+from .upscode import UPSCode
 
-class UPS(object):
+
+class UPS(UPSCode):
     """
     UPS Driver for the UPiS Advanced
     """
@@ -16,29 +16,28 @@ class UPS(object):
     __port = "/dev/ttyAMA0"
     __batterylowerlimit = 3.4
 
-    __verbose = False
 
-    def __init__(self):
+
+    def __init__(self, log):
+        super().__init__()
+
+        self.__log = log
+
         self.__serial = serial
 
         # Check if serial port device exists
         if not path.exists(self.__port):
-            print("ERROR: Serial port '{0}' cannot be found!".format(str(self.__port)))
+            self.__log.info(f"ERROR: Serial port '{str(self.__port)}' cannot be found!")
             exit(1)
 
-        self.__pipower = False
-        self.__upsusbpower = False
-        self.__upsexternalpower = False
-        self.__batterypower = False
+        self.__powersource()
 
-        self.__get_powersource()
-
-    def __queryUPIS(self, query, resultstring):
+    def __queryups(self, query, resultstring):
         # Set up the connection to the UPS
         upis = self.__serial.Serial(port=self.__port, baudrate=self.__baudrate, timeout=self.__timeout,
                                     rtscts=self.__rtscts, xonxoff=self.__xonxoff)
 
-        upis.write("@{0}\r".format(query).encode())
+        upis.write(f"@{query}\r".encode())
         upis.flush()
         results = upis.readlines()
 
@@ -49,33 +48,20 @@ class UPS(object):
             # get rid of the newline characters
             line = line.decode().strip()
 
-            if self.__verbose:
-                print("INFO: Reading line {0}".format(line))
-
             # is it the answer we are looking for? (yep, should be regexp...)
             if resultstring in line:
                 response = line.split(":", 1)[1].split(" ")[0]
 
-                if self.__verbose:
-                    print("INFO: Query '{0}' returned {1}".format(query, response))
-
         return response
 
-    def __get_powersource(self):
-        if self.__verbose:
-            print('INFO: Detecting power setup')
+    def __powersource(self):
+        powersource = self.__queryups("PM", "Powering Source")
 
-        powersource = self.__queryUPIS("PM", "Powering Source")
-
-        # is it the answer we are looking for? (yep, should be regexp...)
         if powersource is not None:
             self.__pipower = False
             self.__upsusbpower = False
             self.__upsexternalpower = False
             self.__batterypower = False
-
-            if self.__verbose:
-                print("INFO: System is powered via {0}".format(powersource))
 
             if powersource == 'RPI':
                 self.__pipower = True
@@ -86,62 +72,52 @@ class UPS(object):
             elif powersource == 'USB':
                 self.__upsusbpower = True
 
-    def __get_voltage(self, source):
-        voltage = self.__queryUPIS(source, "Voltage")
+    def __voltage(self, source):
+        return float(self.__queryups(source, "Voltage"))
 
-        if self.__verbose:
-            print("INFO: Battery voltage {0}".format(voltage))
-
-        return float(voltage)
-
-    def __get_current(self):
-        current = self.__queryUPIS("CUR", "UPS Current")
-
-        if self.__verbose:
-            print("INFO: Battery voltage {0}".format(current))
-
-        return float(current)
+    def __current(self):
+        return float(self.__queryups("CUR", "UPS current"))
 
     @property
-    def ispowered(self):
-        self.__get_powersource()
+    def isPowered(self):
+        self.__powersource()
         return self.__pipower or self.__upsexternalpower or self.__upsusbpower
 
     @property
-    def isonbattery(self):
-        self.__get_powersource()
+    def isOnBattery(self):
+        self.__powersource()
         return self.__batterypower
 
     @property
-    def getbatteryvoltage(self):
-        return self.__get_voltage("BAT")
+    def batteryVoltage(self):
+        return self.__voltage("BAT")
 
     @property
-    def getpivoltage(self):
-        return self.__get_voltage("RPI")
+    def piVoltage(self):
+        return self.__voltage("RPI")
 
     @property
-    def getsupplyvoltage(self):
-        epr = self.__get_voltage("EPR")
-        usb = self.__get_voltage("USB")
+    def supplVoltage(self):
+        epr = self.__voltage("EPR")
+        usb = self.__voltage("USB")
         return max(epr, usb)
 
     @property
-    def isbatteryok(self):
-        return self.__get_voltage("BAT") >= self.__batterylowerlimit
+    def isBatteryOk(self):
+        return self.__voltage("BAT") >= self.__batterylowerlimit
 
     @property
-    def ischarging(self):
-        self.__get_powersource()
+    def isCharging(self):
+        self.__powersource()
         return self.__pipower or self.__upsexternalpower or self.__upsusbpower
 
     @property
-    def getcurrent(self):
-        return self.__get_current()
+    def current(self):
+        return self.__current()
 
     @property
-    def getpowersource(self):
-        self.__get_powersource()
+    def powerSource(self):
+        self.__powersource()
 
         powersource = "Unknown"
 
@@ -151,13 +127,7 @@ class UPS(object):
             powersource = "External"
         elif self.__batterypower:
             powersource = "Battery"
-        elif powersource == "USB":
+        elif self.__upsusbpower:
             powersource = "UPS USB"
 
         return powersource
-
-    def updatedisplay(self):
-        """
-        If the UPS is able to display its condition, do so
-        """
-        pass
