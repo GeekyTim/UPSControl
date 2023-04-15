@@ -16,16 +16,12 @@ class UPS(UPSCode):
     __port = "/dev/ttyAMA0"
     __batterylowerlimit = 3.4
 
-
-
     def __init__(self, log):
-        super().__init__()
-
-        self.__log = log
+        super().__init__(log)
 
         self.__serial = serial
 
-        # Check if serial port device exists
+        # Check if a serial port device exists
         if not path.exists(self.__port):
             self.__log.info(f"ERROR: Serial port '{str(self.__port)}' cannot be found!")
             exit(1)
@@ -76,47 +72,52 @@ class UPS(UPSCode):
         return float(self.__queryups(source, "Voltage"))
 
     def __current(self):
-        return float(self.__queryups("CUR", "UPS current"))
+        return float(self.__queryups("CUR", "UPiS Current"))
 
     @property
-    def isPowered(self):
+    def is_powered(self):
         self.__powersource()
         return self.__pipower or self.__upsexternalpower or self.__upsusbpower
 
     @property
-    def isOnBattery(self):
+    def is_on_battery(self):
         self.__powersource()
         return self.__batterypower
 
     @property
-    def batteryVoltage(self):
+    def battery_voltage(self):
         return self.__voltage("BAT")
 
     @property
-    def piVoltage(self):
+    def pi_voltage(self):
         return self.__voltage("RPI")
 
     @property
-    def supplVoltage(self):
+    def supply_voltage(self):
         epr = self.__voltage("EPR")
         usb = self.__voltage("USB")
         return max(epr, usb)
 
     @property
-    def isBatteryOk(self):
-        return self.__voltage("BAT") >= self.__batterylowerlimit
+    def is_battery_ok(self):
+        response = True
+
+        if self.is_on_battery and self.__voltage("BAT") < self.__batterylowerlimit:
+            response = False
+
+        return response
 
     @property
-    def isCharging(self):
+    def is_charging(self):
         self.__powersource()
         return self.__pipower or self.__upsexternalpower or self.__upsusbpower
 
     @property
-    def current(self):
+    def battery_current(self):
         return self.__current()
 
     @property
-    def powerSource(self):
+    def power_source(self):
         self.__powersource()
 
         powersource = "Unknown"
@@ -128,6 +129,6 @@ class UPS(UPSCode):
         elif self.__batterypower:
             powersource = "Battery"
         elif self.__upsusbpower:
-            powersource = "UPS USB"
+            powersource = "HAT"
 
         return powersource

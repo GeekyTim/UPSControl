@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 import logging
 from datetime import datetime
 from os import system
@@ -6,7 +8,6 @@ from time import sleep
 
 from systemd.journal import JournalHandler
 
-import upscode.undervoltage as undervoltage
 import upsconfig
 
 log = logging.getLogger("UPS")
@@ -27,52 +28,85 @@ elif upsconfig.upstype == "PiUpTime":
 
     log.setLevel(logging.INFO)
     log.info("PiUpTime UPS")
+elif upsconfig.upstype == "PiJuice":
+    import upscode.PSpijuice as ups
+
+    log.setLevel(logging.INFO)
+    log.info("PiJuice UPS")
 else:
     log.setLevel(logging.ERROR)
     log.info("Define the UPS Type in upsconfig.py")
     exit(0)
 
 attachedups = ups.UPS(log)
-vgcmd = undervoltage.Undervoltage(log)
 
 
-def logBatteryPower():
-    batterypercent = attachedups.batteryPercent
+def logbatterypower():
+    batterypercent = attachedups.battery_percent
     if batterypercent is not None:
-        log.setLevel(logging.INFO)
-        log.info(f"Battery Remaining: {batterypercent:.1%}")
+        logmessage(f"Battery Remaining: {batterypercent:.1%}")
 
 
-def upsCheckStatus():
+def logmessage(message):
+    log.setLevel(logging.INFO)
+    log.info(message)
+    print(message)
+
+
+def testups():
+    if attachedups.is_powered is not None:
+        print(f'Is Powered: {attachedups.is_powered}')
+    if attachedups.is_on_battery is not None:
+        print(f'Is on battery: {attachedups.is_on_battery}')
+    if attachedups.battery_voltage is not None:
+        print(f'Battery Voltage: {attachedups.battery_voltage} v')
+    if attachedups.pi_voltage is not None:
+        print(f'Pi Voltage: {attachedups.pi_voltage} v')
+    if attachedups.supply_voltage is not None:
+        print(f'Supply Voltage: {attachedups.supply_voltage} v')
+    if attachedups.is_battery_ok is not None:
+        print(f'Is Battery OK: {attachedups.is_battery_ok}')
+    if attachedups.is_charging is not None:
+        print(f'Is Charging: {attachedups.is_charging}')
+    if attachedups.battery_current is not None:
+        print(f'Current: {attachedups.battery_current} A')
+    if attachedups.battery_percent is not None:
+        print(f'Battery %: {attachedups.battery_percent:.1%}')
+    if attachedups.power_source is not None:
+        print(f'Power Source: {attachedups.power_source}')
+
+
+def ups_check_status():
     onbattery = False
-    vgcmd.undervoltage()
-    attachedups.updateDisplay()
+    attachedups.update_display()
+    testups()
 
     while True:
-        if attachedups.isPowered is not None:
-            if attachedups.isPowered:
+        ispowered = attachedups.is_powered
+        isonbattery = attachedups.is_on_battery
+        now = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
+        if ispowered is not None and isonbattery is not None:
+            if ispowered:
                 if onbattery:
                     onbattery = False
-                    log.setLevel(logging.INFO)
-                    log.info(f"Power returned at {datetime.today()}.")
-                    logBatteryPower()
-            else:
-                if not onbattery:
-                    log.setLevel(logging.INFO)
-                    log.info(f"UPS Battery is being used at {datetime.today()}.")
+                    logmessage(f"Power returned at {now}.")
+            elif not onbattery:
                 onbattery = True
-                logBatteryPower()
+                logmessage(f"UPS Battery is being used at {now}.")
+                logbatterypower()
+            else:
+                logbatterypower()
 
-        if not attachedups.isBatteryOk:
-            log.setLevel(logging.INFO)
-            log.info(f"UPS Battery is running out. Shutting down the Pi at {datetime.today()}.")
-            logBatteryPower()
+        if not attachedups.is_battery_ok:
+            logmessage(f"UPS Battery is running out. Shutting down the Pi at {now}.")
+            logbatterypower()
             system("sudo shutdown -h now")  # Shutdown the Pi
 
-        attachedups.updateDisplay()
-        vgcmd.undervoltage()
+        # TODO: Add hourly log of battery status
+
+        attachedups.update_display()
         sleep(upsconfig.refreshtime)
 
 
 if __name__ == "__main__":
-    upsCheckStatus()
+    ups_check_status()

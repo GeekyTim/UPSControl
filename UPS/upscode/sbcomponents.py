@@ -1,5 +1,4 @@
 import smbus
-from os import path
 
 from .oled_091 import SSD1306
 from .upscode import UPSCode
@@ -21,16 +20,16 @@ class Gain:
 
 class ADCResolution:
     """Constants for ``__bus_adc_resolution`` or ``__shunt_adc_resolution``"""
-    ADCRES_9BIT_1S = 0x00  # 9bit,   1 sample,     84us
-    ADCRES_10BIT_1S = 0x01  # 10bit,   1 sample,    148us
-    ADCRES_11BIT_1S = 0x02  # 11 bit,  1 sample,    276us
-    ADCRES_12BIT_1S = 0x03  # 12 bit,  1 sample,    532us
-    ADCRES_12BIT_2S = 0x09  # 12 bit,  2 samples,  1.06ms
-    ADCRES_12BIT_4S = 0x0A  # 12 bit,  4 samples,  2.13ms
-    ADCRES_12BIT_8S = 0x0B  # 12bit,   8 samples,  4.26ms
-    ADCRES_12BIT_16S = 0x0C  # 12bit,  16 samples,  8.51ms
-    ADCRES_12BIT_32S = 0x0D  # 12bit,  32 samples, 17.02ms
-    ADCRES_12BIT_64S = 0x0E  # 12bit,  64 samples, 34.05ms
+    ADCRES_9BIT_1S = 0x00  # 9bit, 1 sample, 84.0us
+    ADCRES_10BIT_1S = 0x01  # 10bit, 1 sample, 148.0us
+    ADCRES_11BIT_1S = 0x02  # 11 bit, 1 sample, 276.0us
+    ADCRES_12BIT_1S = 0x03  # 12 bit, 1 sample, 532.0us
+    ADCRES_12BIT_2S = 0x09  # 12 bit, 2 samples, 1.06ms
+    ADCRES_12BIT_4S = 0x0A  # 12 bit, 4 samples, 2.13ms
+    ADCRES_12BIT_8S = 0x0B  # 12bit, 8 samples, 4.26ms
+    ADCRES_12BIT_16S = 0x0C  # 12bit, 16 samples, 8.51ms
+    ADCRES_12BIT_32S = 0x0D  # 12bit, 32 samples, 17.02ms
+    ADCRES_12BIT_64S = 0x0E  # 12bit, 64 samples, 34.05ms
     ADCRES_12BIT_128S = 0x0F  # 12bit, 128 samples, 68.10ms
 
 
@@ -62,9 +61,7 @@ class UPS(UPSCode):
     _REG_CALIBRATION = 0x05  # CALIBRATION REGISTER (R/W)
 
     def __init__(self, log):
-        super().__init__()
-
-        self.__log = log
+        super().__init__(log)
 
         # The OLED Display - over I2C
         self.__oled_display = SSD1306()
@@ -76,7 +73,7 @@ class UPS(UPSCode):
         # Set chip to known config values to start
         self.__cal_value = 4096
         self.__current_lsb = 0.1  # __getcurrent LSB = 100uA per bit
-        self.__power_lsb = 0.002  # __power LSB = 2mW per bit
+        # self.__power_lsb = 0.002  # __power LSB = 2mW per bit
         self.__calibrate()
 
     def __read(self, address):
@@ -99,20 +96,18 @@ class UPS(UPSCode):
         self.__write(self._REG_CALIBRATION, self.__cal_value)
 
         # Set Config register to take into account the settings
-        config = BusVoltageRange.RANGE_32V << 13 | \
-                 Gain.DIV_8_320MV << 11 | \
-                 ADCResolution.ADCRES_12BIT_32S << 7 | \
-                 ADCResolution.ADCRES_12BIT_32S << 3 | \
+        config = BusVoltageRange.RANGE_32V << 13 | Gain.DIV_8_320MV << 11 | \
+                 ADCResolution.ADCRES_12BIT_32S << 7 | ADCResolution.ADCRES_12BIT_32S << 3 | \
                  Mode.SANDBVOLT_CONTINUOUS
 
         self.__write(self._REG_CONFIG, config)
 
-    def __shuntvoltage(self):  # shunt voltage in milli volts
-        # self.__write(self._REG_CALIBRATION, self.__cal_value)
-        value = self.__read(self._REG_SHUNTVOLTAGE)
-        if value > 32767:
-            value -= 65535
-        return value * 0.01
+    # def __shuntvoltage(self):  # shunt voltage in milli volts
+    #     # self.__write(self._REG_CALIBRATION, self.__cal_value)
+    #     value = self.__read(self._REG_SHUNTVOLTAGE)
+    #     if value > 32767:
+    #         value -= 65535
+    #     return value * 0.01
 
     def __current(self):  # current in milli amp
         value = self.__read(self._REG_CURRENT)
@@ -120,12 +115,12 @@ class UPS(UPSCode):
             value -= 65535
         return (value * self.__current_lsb) / 1000.0
 
-    def __power(self):
-        # self.__write(self._REG_CALIBRATION, self.__cal_value)
-        value = self.__read(self._REG_POWER)
-        if value > 32767:
-            value -= 65535
-        return value * self.__power_lsb
+    # def __power(self):
+    #     # self.__write(self._REG_CALIBRATION, self.__cal_value)
+    #     value = self.__read(self._REG_POWER)
+    #     if value > 32767:
+    #         value -= 65535
+    #     return value * self.__power_lsb
 
     def __busvoltage(self):
         # self.__write(self._REG_CALIBRATION, self.__cal_value)
@@ -145,58 +140,48 @@ class UPS(UPSCode):
     """
 
     @property
-    def isPowered(self):
+    def is_powered(self):
         return self.__current() > -0.15
 
     @property
-    def isOnBattery(self):
+    def is_on_battery(self):
         # Use current - for charging, + for use
         return self.__current() <= -0.15
 
     @property
-    def isBatteryOk(self):
+    def is_battery_ok(self):
         return self.__batterypercent() >= self.__batterylowerlimit
 
     @property
-    def supplyVoltage(self):
+    def supply_voltage(self):
         return self.__busvoltage()
 
     @property
-    def current(self):
+    def battery_current(self):
         return self.__current()
 
     @property
-    def batteryPercent(self):
+    def battery_percent(self):
         return self.__batterypercent()
 
     @property
-    def powerSource(self):
+    def power_source(self):
         powersource = "Unknown"
 
-        if self.isPowered:
-            powersource = "External"
-        elif self.isOnBattery:
+        if self.is_powered:
+            powersource = "HAT"
+        elif self.is_on_battery:
             powersource = "Battery"
 
         return powersource
 
-    def updateDisplay(self):
+    def update_display(self):
         """
         If the UPS is able to display its condition, do so
         """
-
-        # self.__log.info("Power: {:0.2f}, shunt: {:0.2f}, bus: {:0.2f}, current: {:0.2f}, Battery %: {:.1%}".format(
-        #         self.__power(),
-        #         self.__shuntvoltage(),
-        #         self.__busvoltage(),
-        #         self.__current(),
-        #         self.__batterypercent())
-        #         )
-
-        if self.isPowered:
+        if self.is_powered:
             self.__oled_display.PrintText("Powered", cords=(1, 4), FontSize=28)
         else:
-            self.__oled_display.PrintText("Battery: {:.1%}".format(self.batteryPercent), cords=(3, 10),
-                                          FontSize=16)
+            self.__oled_display.PrintText("Battery: {:.1%}".format(self.battery_percent), cords=(3, 10), FontSize=16)
 
         self.__oled_display.ShowImage()

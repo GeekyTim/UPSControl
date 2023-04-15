@@ -1,1 +1,4 @@
 /venv/
+!/UPS/usecpu.py
+/.idea/
+/UPS Documentation/
