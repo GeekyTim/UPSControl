@@ -11,7 +11,7 @@ Type=idle
 User=${USER}
 ExecStart=/usr/bin/python3 /home/${USER}/UPS/ups.py
 Restart=always
-RestartSec=10
+RestartSec=60
 
 [Install]
 WantedBy=multi-user.target
@@ -21,6 +21,7 @@ echo "Installing required libraries"
 sudo apt update
 sudo apt install python3-pip python3-systemd -y
 sudo pip3 install vcgencmd
+# sudo pip3 install adafruit-circuitpython-ssd1306 # Required for OLED screens
 
 echo "Change unit file permissions"
 sudo chmod 644 /lib/systemd/system/UPS.service

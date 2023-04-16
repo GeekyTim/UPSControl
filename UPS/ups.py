@@ -29,7 +29,7 @@ elif upsconfig.upstype == "PiUpTime":
     log.setLevel(logging.INFO)
     log.info("PiUpTime UPS")
 elif upsconfig.upstype == "PiJuice":
-    import upscode.PSpijuice as ups
+    import upscode.pspijuice as ups
 
     log.setLevel(logging.INFO)
     log.info("PiJuice UPS")
@@ -53,33 +53,33 @@ def logmessage(message):
     print(message)
 
 
-def testups():
+def startup_status():
     if attachedups.is_powered is not None:
-        print(f'Is Powered: {attachedups.is_powered}')
+        logmessage(f'Is Powered: {attachedups.is_powered}')
     if attachedups.is_on_battery is not None:
-        print(f'Is on battery: {attachedups.is_on_battery}')
+        logmessage(f'Is on battery: {attachedups.is_on_battery}')
     if attachedups.battery_voltage is not None:
-        print(f'Battery Voltage: {attachedups.battery_voltage} v')
+        logmessage(f'Battery Voltage: {attachedups.battery_voltage} v')
     if attachedups.pi_voltage is not None:
-        print(f'Pi Voltage: {attachedups.pi_voltage} v')
+        logmessage(f'Pi Voltage: {attachedups.pi_voltage} v')
     if attachedups.supply_voltage is not None:
-        print(f'Supply Voltage: {attachedups.supply_voltage} v')
+        logmessage(f'Supply Voltage: {attachedups.supply_voltage} v')
     if attachedups.is_battery_ok is not None:
-        print(f'Is Battery OK: {attachedups.is_battery_ok}')
+        logmessage(f'Is Battery OK: {attachedups.is_battery_ok}')
     if attachedups.is_charging is not None:
-        print(f'Is Charging: {attachedups.is_charging}')
+        logmessage(f'Is Charging: {attachedups.is_charging}')
     if attachedups.battery_current is not None:
-        print(f'Current: {attachedups.battery_current} A')
+        logmessage(f'Current: {attachedups.battery_current} A')
     if attachedups.battery_percent is not None:
-        print(f'Battery %: {attachedups.battery_percent:.1%}')
+        logmessage(f'Battery %: {attachedups.battery_percent:.1%}')
     if attachedups.power_source is not None:
-        print(f'Power Source: {attachedups.power_source}')
+        logmessage(f'Power Source: {attachedups.power_source}')
 
 
 def ups_check_status():
     onbattery = False
     attachedups.update_display()
-    testups()
+    startup_status()
 
     while True:
         ispowered = attachedups.is_powered
